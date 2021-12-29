@@ -1,4 +1,7 @@
 import setuptools, os, sys, platform, shutil
+from setuptools.command.install import install
+from setuptools.command.develop import develop
+from delphifmx import moduledefs
 
 pkgname = "delphifmx"
 
@@ -11,6 +14,37 @@ try:
       self.root_is_pure = False
 except ImportError:
   bdist_wheel = None 
+
+class BaseInstallCommand(object):
+  #Accepting install arguments (not supported by wheels)
+  #Easily used by --install-option
+  #  --install-option="--python-home=my_python_home"
+  user_options = [
+    ('python-home', None, 'The Python home path'),
+    ('python-bin=', None, 'Python program name directory')
+    ('python-lib=', None, 'Python shared library directory')
+  ]
+
+  def initialize_options(self):
+    super().initialize_options()
+    self.python_home = ''
+    self.python_bin = ''
+    self.python_lib = ''
+
+  def finalize_options(self):
+    super().finalize_options()
+
+  def run(self):
+    moduledefs.set_python_home(self.python_home)
+    moduledefs.set_python_bin(self.python_bin)
+    moduledefs.set_python_lib(self.python_lib)
+    super().run()
+
+class InstallCommand(BaseInstallCommand, install):
+    user_options = getattr(install, 'user_options', []) + BaseInstallCommand.user_options
+
+class DevelopCommand(BaseInstallCommand, develop):
+    user_options = getattr(develop, 'user_options', []) + BaseInstallCommand.user_options
  
 #Find sys/machine file
 def buildfilepath():
@@ -20,7 +54,7 @@ def buildfilepath():
   sfilename = ""
   if ossys == "Windows":
     sfilename = "DelphiFMX.pyd"
-    if platmac.endswith('64'):
+    if (sys.maxsize > 2**32):
       #Win x64	
       platmacshort = "Win64"
     else:
@@ -46,9 +80,7 @@ def buildfilepath():
   if not platmacshort:
     raise ValueError("Undetermined platform.")
   
-  pyversionstrshort = f"{sys.version_info.major}{sys.version_info.minor}"
-
-  return f"DelphiFMX_{platmacshort}_{pyversionstrshort}{os.sep}{sfilename}"
+  return f"DelphiFMX_{platmacshort}{os.sep}{sfilename}"
 
 #Copy target file from lib to pkg folder
 def copylibfiletopkg(slibfile, spkgfile): 
@@ -121,7 +153,7 @@ extra_args = {}
 if not ("sdist" in sys.argv):  
   slibdir = os.path.join(os.curdir, "lib")
   #Binary distribution
-  if ("bdist_wheel" in sys.argv) and os.path.exists(slibdir):
+  if (("bdist" in sys.argv) or ("bdist_wheel" in sys.argv)) and os.path.exists(slibdir):
     bdata = copylibfile()
     extra_args = {'package_data': {pkgname: [bdata]}}
   else:
@@ -146,9 +178,9 @@ setuptools.setup(
   license="Other/Proprietary License",
   license_files=["LICENSE.md"],
   url = "https://github.com/Embarcadero/DelphiFMX4Python",
-  packages=["delphifmx"],
-  classifiers=[
-            'Development Status :: 1 - Planning',
+  python_requires=">=3.3<=3.10",
+  packages=[pkgname],
+  classifiers=[            
             'Intended Audience :: Developers',
             'Topic :: Software Development',
             'License :: Other/Proprietary License',
@@ -158,6 +190,7 @@ setuptools.setup(
             'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: 3.9',
+            'Programming Language :: Python :: 3.10',
             'Programming Language :: Python :: 3 :: Only',
             'Operating System :: Microsoft :: Windows',
             'Operating System :: POSIX',
@@ -165,6 +198,10 @@ setuptools.setup(
             'Operating System :: MacOS',
             'Operating System :: Android',                        
         ],		
-  cmdclass={'bdist_wheel': bdist_wheel},
+  cmdclass={
+    'bdist_wheel': bdist_wheel,
+    'install': InstallCommand,
+    'develop': DevelopCommand,
+  },
   **extra_args
 )
