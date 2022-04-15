@@ -1,7 +1,6 @@
 import sys, os, sys, platform
 from os import environ
 import importlib, importlib.machinery, importlib.util
-from delphifmx import moduledefs
 
 class PyVerNotSupported(Exception):
   pass
@@ -36,22 +35,12 @@ def findmodule():
         #Android x32
         libdir = "Android" 
     else:
-      if is_conda and (pyver == "3.10"):
-        raise PyVerNotSupported("DelphiFMX doesn't support Python3.10 on Linux with Conda environment yet.")
-      elif (pyver == "3.6"):
-        raise PyVerNotSupported("DelphiFMX doesn't support Python3.6 on Linux.")
-
       if platmac == "x86_64":
         #Linux x86_64
         libdir = "Linux64"
 
     libext = ".so"
   elif ossys == "Darwin":
-    if is_conda:
-      raise PyVerNotSupported("DelphiFMX doesn't support Python on macOS with Conda environment yet.")
-    elif (pyver == "3.6"):
-      raise PyVerNotSupported("DelphiFMX doesn't support Python3.6 on macOS.")
-
     if platmac == "x86_64":
       #macOS x86_64
       libdir = "OSX64"
@@ -82,8 +71,5 @@ def new_import():
     spec.loader.exec_module(package)
     return package
     
-#Setup moduledefs.json
-if moduledefs.get_auto_load_defs():
-  moduledefs.try_load_defs(False)
 #Import the shared lib
 package = new_import()
