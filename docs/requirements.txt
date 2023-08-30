@@ -1,0 +1,7 @@
+delphifmx
+furo
+myst-parser
+sphinx
+sphinx-copybutton
+sphinxext-opengraph
+graphviz

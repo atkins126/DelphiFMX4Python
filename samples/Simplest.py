@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #-----------------------------------------------
 # Name:        Simplest.py
 # Purpose:     The simplest demo of Delphi FMX
@@ -12,13 +13,15 @@ from delphifmx import *
 
 Application.Initialize()
 Application.Title = "Hello Delphi FMX"
-Application.MainForm = Form(Application)
-Application.MainForm.SetProps(Caption = "Hello World")
-msg = Label(Application.MainForm)
-msg.SetProps(Parent = Application.MainForm,
+main_window = Form(Application)
+Application.MainForm = main_window
+
+main_window.SetProps(Caption = "Hello World")
+msg = Label(main_window)
+msg.SetProps(Parent = main_window,
     Text = "Hello Python from Delphi FMX",
     Position = Position(PointF(20, 20)),
     Width = 200)
-Application.MainForm.Show()
+main_window.Show()
 Application.Run() # This is the main loop
-Application.MainForm.Destroy()
+main_window.Destroy()
